@@ -5,7 +5,8 @@
 from __future__ import annotations
 from calendar import c
 import numpy as np
-from qiskit import Aer, execute
+#from qiskit import execute
+#from qiskit_aer import Aer
 from functools import reduce
 import numba.cuda
 
@@ -15,86 +16,86 @@ import typing
 from .parameter_utils import from_fourier_basis
 import qokit.parameter_utils
 from qokit.parameter_utils import QAOAParameterization
-from .qaoa_circuit_portfolio import measure_circuit
+#from .qaoa_circuit_portfolio import measure_circuit
 from .utils import reverse_array_index_bit_order
 
 from .fur.diagonal_precomputation import precompute_vectorized_cpu_parallel
 
-
-def _get_qiskit_objective(
-    parameterized_circuit,
-    precomputed_objectives=None,
-    precomputed_optimal_bitstrings=None,
-    objective: str = "expectation",
-    terms=None,
-    parameterization: str | QAOAParameterization = "theta",
-    mixer: str = "x",
-    optimization_type="min",
-):
-    N = parameterized_circuit.num_qubits
-    if objective == "expectation":
-        if precomputed_objectives is None:
-            if terms is None:
-                raise ValueError(f"precomputed_objectives or terms are required when using the {objective} objective")
-            else:
-                precomputed_objectives = precompute_vectorized_cpu_parallel(terms, 0.0, N)
-
-        def compute_objective_from_probabilities(probabilities):  # type: ignore
-            if optimization_type == "max":
-                return -1 * precomputed_objectives.dot(probabilities)
-            return precomputed_objectives.dot(probabilities)
-
-    elif objective == "overlap":
-        if precomputed_optimal_bitstrings is None:
-            if precomputed_objectives is None:
-                if terms is None:
-                    raise ValueError(f"precomputed_objectives or terms are required when using the {objective} objective")
-                else:
-                    precomputed_objectives = precompute_vectorized_cpu_parallel(terms, 0.0, N)
-            if optimization_type == "max":
-                precomputed_objectives = -1 * np.asarray(precomputed_objectives)
-            minval = precomputed_objectives.min()
-            bitstring_loc = (precomputed_objectives == minval).nonzero()
-            assert len(bitstring_loc) == 1
-            bitstring_loc = bitstring_loc[0]
-        else:
-            # extract locations of the optimal_bitstrings in 2**N
-            bitstring_loc = np.array([reduce(lambda a, b: 2 * a + b, x) for x in precomputed_optimal_bitstrings])
-
-        def compute_objective_from_probabilities(probabilities):  # type: ignore
-            # compute overlap
-            overlap = 0
-            for i in range(len(bitstring_loc)):
-                overlap += probabilities[bitstring_loc[i]]
-            return 1 - overlap
-
-    else:
-        raise ValueError(f"Unknown objective passed to get_qaoa_objective: {objective}, allowed ['expectation', 'overlap']")
-
-    if mixer == "x":
-        backend = Aer.get_backend("aer_simulator_statevector")
-
-        def g(gamma, beta):
-            qc = parameterized_circuit.bind_parameters(list(np.hstack([beta, gamma])))
-            sv = np.asarray(backend.run(qc).result().get_statevector())
-            probs = np.abs(sv) ** 2
-            return compute_objective_from_probabilities(probs)
-
-    elif mixer == "xy":
-        backend = Aer.get_backend("statevector_simulator")
-
-        def g(gamma, beta):
-            qc = parameterized_circuit.bind_parameters(np.hstack([np.asarray(beta) / 2, np.asarray(gamma) / 2]))
-            result = execute(qc, backend).result()
-            sv = reverse_array_index_bit_order(result.get_statevector())
-            probs = np.abs(sv) ** 2
-            return compute_objective_from_probabilities(probs)
-
-    else:
-        raise ValueError(f"Unknown mixer type passed to get_qaoa_objective: {mixer}, allowed ['x', 'xy']")
-
-    return g
-
+#
+# def _get_qiskit_objective(
+#     parameterized_circuit,
+#     precomputed_objectives=None,
+#     precomputed_optimal_bitstrings=None,
+#     objective: str = "expectation",
+#     terms=None,
+#     parameterization: str | QAOAParameterization = "theta",
+#     mixer: str = "x",
+#     optimization_type="min",
+# ):
+#     N = parameterized_circuit.num_qubits
+#     if objective == "expectation":
+#         if precomputed_objectives is None:
+#             if terms is None:
+#                 raise ValueError(f"precomputed_objectives or terms are required when using the {objective} objective")
+#             else:
+#                 precomputed_objectives = precompute_vectorized_cpu_parallel(terms, 0.0, N)
+#
+#         def compute_objective_from_probabilities(probabilities):  # type: ignore
+#             if optimization_type == "max":
+#                 return -1 * precomputed_objectives.dot(probabilities)
+#             return precomputed_objectives.dot(probabilities)
+#
+#     elif objective == "overlap":
+#         if precomputed_optimal_bitstrings is None:
+#             if precomputed_objectives is None:
+#                 if terms is None:
+#                     raise ValueError(f"precomputed_objectives or terms are required when using the {objective} objective")
+#                 else:
+#                     precomputed_objectives = precompute_vectorized_cpu_parallel(terms, 0.0, N)
+#             if optimization_type == "max":
+#                 precomputed_objectives = -1 * np.asarray(precomputed_objectives)
+#             minval = precomputed_objectives.min()
+#             bitstring_loc = (precomputed_objectives == minval).nonzero()
+#             assert len(bitstring_loc) == 1
+#             bitstring_loc = bitstring_loc[0]
+#         else:
+#             # extract locations of the optimal_bitstrings in 2**N
+#             bitstring_loc = np.array([reduce(lambda a, b: 2 * a + b, x) for x in precomputed_optimal_bitstrings])
+#
+#         def compute_objective_from_probabilities(probabilities):  # type: ignore
+#             # compute overlap
+#             overlap = 0
+#             for i in range(len(bitstring_loc)):
+#                 overlap += probabilities[bitstring_loc[i]]
+#             return 1 - overlap
+#
+#     else:
+#         raise ValueError(f"Unknown objective passed to get_qaoa_objective: {objective}, allowed ['expectation', 'overlap']")
+#
+#     if mixer == "x":
+#         backend = Aer.get_backend("aer_simulator_statevector")
+#
+#         def g(gamma, beta):
+#             qc = parameterized_circuit.bind_parameters(list(np.hstack([beta, gamma])))
+#             sv = np.asarray(backend.run(qc).result().get_statevector())
+#             probs = np.abs(sv) ** 2
+#             return compute_objective_from_probabilities(probs)
+#
+#     elif mixer == "xy":
+#         backend = Aer.get_backend("statevector_simulator")
+#
+#         def g(gamma, beta):
+#             qc = parameterized_circuit.bind_parameters(np.hstack([np.asarray(beta) / 2, np.asarray(gamma) / 2]))
+#             result = execute(qc, backend).result()
+#             sv = reverse_array_index_bit_order(result.get_statevector())
+#             probs = np.abs(sv) ** 2
+#             return compute_objective_from_probabilities(probs)
+#
+#     else:
+#         raise ValueError(f"Unknown mixer type passed to get_qaoa_objective: {mixer}, allowed ['x', 'xy']")
+#
+#     return g
+#
 
 def get_qaoa_objective(
     N: int,
@@ -149,6 +150,7 @@ def get_qaoa_objective(
 
     # -- Qiskit edge case
     if simulator == "qiskit":
+        raise NotImplementedError("Qiskit simulator is not supported in this version")
         if precomputed_costs is None:
             precomputed_costs = precomputed_diagonal_hamiltonian
         g = _get_qiskit_objective(

@@ -5,12 +5,13 @@
 # pyright: reportGeneralTypeIssues=false
 import math
 import numba.cuda
+from qokit.fur.nbcuda.fbm_monkey_patch import __global_grid_size__
 
 
 @numba.cuda.jit
 def norm_squared_kernel(sv):
     n = len(sv)
-    tid = numba.cuda.grid(1)
+    tid = numba.cuda.grid(__global_grid_size__)
 
     if tid < n:
         sv[tid] = abs(sv[tid]) ** 2
@@ -27,7 +28,7 @@ def norm_squared(sv):
 @numba.cuda.jit
 def initialize_uniform_kernel(sv, scale):
     n = len(sv)
-    tid = numba.cuda.grid(1)
+    tid = numba.cuda.grid(__global_grid_size__)
 
     if tid < n:
         sv[tid] = scale / math.sqrt(n)
@@ -43,7 +44,7 @@ def initialize_uniform(sv, scale=1.0):
 @numba.cuda.jit
 def multiply_kernel(a, b):
     n = len(a)
-    tid = numba.cuda.grid(1)
+    tid = numba.cuda.grid(__global_grid_size__)
 
     if tid < n:
         a[tid] = a[tid] * b[tid]
@@ -56,7 +57,7 @@ def multiply(a, b):
 @numba.cuda.jit
 def copy_kernel(a, b):
     n = len(a)
-    tid = numba.cuda.grid(1)
+    tid = numba.cuda.grid(__global_grid_size__)
 
     if tid < n:
         a[tid] = b[tid]

@@ -4,12 +4,13 @@
 ###############################################################################
 import math
 import numba.cuda
+from qokit.fur.nbcuda.fbm_monkey_patch import __global_grid_size__
 
 
 @numba.cuda.jit
 def apply_diagonal_kernel(sv, gamma, diag):
     n = len(sv)
-    tid = numba.cuda.grid(1)
+    tid = numba.cuda.grid(__global_grid_size__)
     if tid < n:
         x = 0.5 * gamma * diag[tid]
         sv[tid] *= math.cos(x) - 1j * math.sin(x)

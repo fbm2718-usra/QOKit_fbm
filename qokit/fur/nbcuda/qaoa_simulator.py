@@ -91,7 +91,7 @@ class QAOAFastSimulatorGPUBase(QAOAFastSimulatorBase):
             return sum_reduce(result).real
 
     def get_overlap(
-        self, result: DeviceArray, costs: CostsType | None = None, indices: np.ndarray | Sequence[int] | None = None, optimization_type="min", **kwargs
+        self, result: DeviceArray, costs: CostsType | None = None, indices: np.ndarray | Sequence[int] | None = None, optimization_type="min",return_indices=False, **kwargs
     ) -> float:
         """
         Compute the overlap between the statevector and the ground state
@@ -124,10 +124,16 @@ class QAOAFastSimulatorGPUBase(QAOAFastSimulatorBase):
                 val = costs_t.max()
             else:
                 val = costs_t.min()
+
             indices_sel = costs_t == val
+
+
         else:
             indices_sel = indices
-        return probs[indices_sel].sum().item()
+
+        if return_indices:
+            return probs[indices_sel].sum(), cp.where(indices_sel==True)[0]
+        return probs[indices_sel].sum()
 
 
 class QAOAFURXSimulatorGPU(QAOAFastSimulatorGPUBase):

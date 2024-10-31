@@ -3,11 +3,12 @@
 # // Copyright : JP Morgan Chase & Co
 ###############################################################################
 import numba.cuda
+from qokit.fur.nbcuda.fbm_monkey_patch import __global_grid_size__
 
 
 @numba.cuda.jit
 def zero_init_kernel(x):
-    tid = numba.cuda.grid(1)
+    tid = numba.cuda.grid(__global_grid_size__)
 
     if tid < len(x):
         x[tid] = 0
@@ -19,7 +20,7 @@ def zero_init(x):
 
 @numba.cuda.jit
 def compute_costs_kernel(costs, coef: float, pos_mask: int, offset: int):
-    tid = numba.cuda.grid(1)
+    tid = numba.cuda.grid(__global_grid_size__)
 
     if tid < len(costs):
         parity = numba.cuda.popc((tid + offset) & pos_mask) & 1
