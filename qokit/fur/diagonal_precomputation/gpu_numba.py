@@ -35,10 +35,9 @@ def compute_costs(rank: int,
                   n_local_qubits: int,
                   terms, 
                   out,
-                  first_qubit_first_bit = True
+                  #TODO(FBM): I modified this so non-qiskit convention can be used
+                  first_qubit_first_bit = False
                   ):
-    #print("FIRST QUBIT FIRST BIT", first_qubit_first_bit)
-
     offset = rank << n_local_qubits
     n = len(out)
     zero_init_kernel.forall(n)(out)
